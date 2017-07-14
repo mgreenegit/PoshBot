@@ -47,13 +47,38 @@ class SlackConnection : Connection {
             [cmdletbinding()]
             param(
                 [parameter(mandatory)]
-                $url
+                $url,
+
+                [hashtable]$options
             )
 
             # Connect to websocket
-            Write-Verbose "[SlackBackend:ReceiveJob] Connecting to websocket at [$($url)]"
+            Write-Verbose "[SlackConnection:StartReceiveJob] Connecting to websocket at [$($url)]"
             [System.Net.WebSockets.ClientWebSocket]$webSocket = New-Object System.Net.WebSockets.ClientWebSocket
             $cts = New-Object System.Threading.CancellationTokenSource
+
+            # Set additional proxy options if told to do so
+            if ($options.keys -gt 0) {
+                if ($options.UseSystemProxy -eq $true) {
+                    if ($env:http_proxy) {
+                        $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList @($env:http_proxy)
+                        Write-Verbose "[SlackConnection:StartReceiveJob] Setting proxy to value of environment variable [http_proxy] [$env:http_proxy]"
+                    } else {
+                        $proxy = [System.Net.WebRequest]::GetSystemWebProxy()
+                        Write-Verbose '[SlackConnection:StartReceiveJob] Setting proxy to default system proxy'
+                    }
+                } elseIf ($options.ContainsKey('ProxyUrl')) {
+                    if ($options.ContainsKey('Credential')) {
+                        Write-Verbose "[SlackConnection:StartReceiveJob] Setting proxy to [$($options.ProxyUrl)] with credential [$($options.Credential.UserName)]"
+                        $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList @($options.ProxyUrl, '', $false, $options.Credential)
+                    } else {
+                        Write-Verbose "[SlackConnection:StartReceiveJob] Setting proxy to [$($options.ProxyUrl)]"
+                        $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList ($options.ProxyUrl)
+                    }
+                }
+                $webSocket.Options.Proxy = $proxy
+            }
+
             $task = $webSocket.ConnectAsync($url, $cts.Token)
             do { Start-Sleep -Milliseconds 100 }
             until ($task.IsCompleted)
@@ -79,7 +104,8 @@ class SlackConnection : Connection {
             }
         }
         try {
-            $this.ReceiveJob = Start-Job -Name ReceiveRtmMessages -ScriptBlock $recv -ArgumentList $this.WebSocketUrl -ErrorAction Stop -Verbose
+            $jobArgs = @($this.WebSocketUrl, $this.Config.Options)
+            $this.ReceiveJob = Start-Job -Name ReceiveRtmMessages -ScriptBlock $recv -ArgumentList $jobArgs -ErrorAction Stop -Verbose
             $this.Connected = $true
             $this.Status = [ConnectionStatus]::Connected
             Write-Verbose "[SlackConnection:StartReceiveJob] Started websocket receive job [$($this.ReceiveJob.Id)]"

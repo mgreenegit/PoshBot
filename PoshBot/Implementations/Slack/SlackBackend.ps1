@@ -150,10 +150,19 @@ class SlackBackend : Backend {
         yellowgreen = "#9ACD32"
     }
 
-    SlackBackend ([string]$Token) {
+    SlackBackend([string]$Token) {
+        $this.Initialize($Token)
+    }
+
+    SlackBackend([string]$Token, [hashtable]$Options) {
+        $this.Initialize($Token)
+        $this.Connection.Config.Options = $Options
+    }
+
+    [void]Initialize([string]$Token) {
         Import-Module PSSlack -Verbose:$false -ErrorAction Stop
 
-        $config = [ConnectionConfig]::new()
+        $config = [SlackConnectionConfig]::new()
         $secToken = $Token | ConvertTo-SecureString -AsPlainText -Force
         $config.Credential = New-Object System.Management.Automation.PSCredential('asdf', $secToken)
         $conn = [SlackConnection]::New()
@@ -626,7 +635,7 @@ function New-PoshBotSlackBackend {
                 throw 'Configuration is missing [Token] parameter'
             } else {
                 Write-Verbose 'Creating new Slack backend instance'
-                $backend = [SlackBackend]::new($item.Token)
+                $backend = [SlackBackend]::new($item.Token, $item)
                 if ($item.Name) {
                     $backend.Name = $item.Name
                 }
