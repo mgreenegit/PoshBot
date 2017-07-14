@@ -127,16 +127,14 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @'
-## [0.6.1] Unreleased
-### Added
-- New command [Get-CommandStatus] to show running commands
-
 ## [0.6.0] Unreleased
 ### Added
 - New builtin command 'Update-Plugin' which updates an existing plugin to a newer version and optionally removes all previous versions.
+- New command [Get-CommandStatus] to show running commands.
 
 ### Fixed
 - Better error handling logic when parsing command help.
+- Use [Configuration] module when reading in bot configuration with [Get-PoshBotConfiguration] so PSCredentials can be deserialized correctly.
 
 ## [0.5.0] 2017-06-14
 ### Added
