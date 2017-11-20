@@ -50,7 +50,7 @@ class PoshBotConfiguration
     [DscProperty()]
     [hashtable]$PluginConfiguration = @{},
 
-    [DscProperty(Mandatory)]
+    [DscProperty()]
     [string[]]$BotAdmins = @(),
 
     [DscProperty()]
