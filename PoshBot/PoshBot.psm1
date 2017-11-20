@@ -44,7 +44,7 @@ class PoshBotConfiguration
     [DscProperty()]
     [int]$CommandHistoryMaxLogsToKeep = 5,
 
-    [DscProperty()]
+    [DscProperty(Mandatory)]
     [hashtable]$BackendConfiguration = @{},
 
     [DscProperty()]
