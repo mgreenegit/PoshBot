@@ -43,6 +43,8 @@
 
 Configuration PoshBot
 {
+    Import-DSCResource -ModuleName PoshBot
+    
     PoshBot BotServer
     {
         Name = 'PoshBot'
