@@ -84,6 +84,8 @@ class PoshBotConfiguration
     {
         $botConfiguration = New-PoshBotConfiguration @this
         Save-PoshBotConfiguration -inputObject $botConfiguration -path (Join-Path $this.ConfigurationDirectory 'config.psd1')
+
+        #TODO - Ensure present/absent
     }
 
     <#

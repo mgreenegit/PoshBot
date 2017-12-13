@@ -45,7 +45,6 @@ Configuration PoshBot
 {
     PoshBot BotServer
     {
-        Ensure = 'Present'
         Name = 'PoshBot'
         BackEndConfiguration = @{} #TODO
     }
