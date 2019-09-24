@@ -1,6 +1,7 @@
 ---
 external help file: PoshBot-help.xml
-online version: 
+Module Name: poshbot
+online version:
 schema: 2.0.0
 ---
 
@@ -13,6 +14,7 @@ Remove existing stateful data
 
 ```
 Remove-PoshBotStatefulData [-Name] <String[]> [[-Scope] <String>] [[-Depth] <Int32>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -20,14 +22,14 @@ Remove existing stateful data
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 Remove-PoshBotStatefulData -Name 'ToUse'
 ```
 
 Removes the 'ToUse' property from stateful data for the PoshBot plugin you are currently running this from.
 
-### -------------------------- EXAMPLE 2 --------------------------
+### EXAMPLE 2
 ```
 Remove-PoshBotStatefulData -Name 'Something' -Scope Global
 ```
@@ -42,7 +44,7 @@ Property to remove from the stateful data file
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -59,7 +61,7 @@ Sets the scope of stateful data to remove:
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 2
@@ -75,7 +77,7 @@ The default value is 2
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 3
@@ -114,6 +116,9 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

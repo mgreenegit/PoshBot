@@ -83,10 +83,8 @@ class CommandExecutor : BaseLogger {
                 $msg = "Approval is needed to run [$($cmdExecContext.ParsedCommand.CommandString)] from someone in the approval group(s) [$approverGroups]."
                 $msg += "`nTo approve, say '$($prefix)approve $($cmdExecContext.Id)'."
                 $msg += "`nTo deny, say '$($prefix)deny $($cmdExecContext.Id)'."
-                $msg += "`nTo list pending approvals, say '$($prefix)pendingapprovals'."
-                $response = [Response]::new()
-                $response.MessageFrom = $cmdExecContext.Message.From
-                $response.To = $cmdExecContext.Message.To
+                $msg += "`nTo list pending approvals, say '$($prefix)pending'."
+                $response = [Response]::new($cmdExecContext.Message)
                 $response.Data = New-PoshBotCardResponse -Type Warning -Title "Approval Needed for [$($cmdExecContext.ParsedCommand.CommandString)]" -Text $msg
                 $this._bot.SendMessage($response)
                 return
@@ -105,7 +103,7 @@ class CommandExecutor : BaseLogger {
 
                     # Kick off job and add to job tracker
                     $cmdExecContext.IsJob = $true
-                    $cmdExecContext.Job = $cmdExecContext.Command.Invoke($cmdExecContext.ParsedCommand, $true)
+                    $cmdExecContext.Job = $cmdExecContext.Command.Invoke($cmdExecContext.ParsedCommand, $true,$this._bot.Backend.GetType().Name)
                     $this.LogDebug("Command [$($cmdExecContext.FullyQualifiedCommandName)] executing in job [$($cmdExecContext.Job.Id)]")
                     $cmdExecContext.Complete = $false
                 } else {
@@ -113,7 +111,7 @@ class CommandExecutor : BaseLogger {
                     # This should only be 'builtin' commands
                     try {
                         $cmdExecContext.IsJob = $false
-                        $hash = $cmdExecContext.Command.Invoke($cmdExecContext.ParsedCommand, $false)
+                        $hash = $cmdExecContext.Command.Invoke($cmdExecContext.ParsedCommand, $false,$this._bot.Backend.GetType().Name)
                         $cmdExecContext.Complete = $true
                         $cmdExecContext.Ended = (Get-Date).ToUniversalTime()
                         $cmdExecContext.Result.Errors = $hash.Error
@@ -306,12 +304,15 @@ class CommandExecutor : BaseLogger {
     [bool]ApprovalNeeded([CommandExecutionContext]$Context) {
         if ($Context.ApprovalState -ne [ApprovalState]::Approved) {
             foreach ($approvalConfig in $this._bot.Configuration.ApprovalConfiguration.Commands) {
-                if ($Context.FullyQualifiedCommandName -like $approvalConfig.PluginCommandExpression) {
+                if ($Context.FullyQualifiedCommandName -like $approvalConfig.Expression) {
 
-                    $approvalGroups = $this._bot.RoleManager.GetUserGroups($Context.ParsedCommand.From)
+                    $approvalGroups = $this._bot.RoleManager.GetUserGroups($Context.ParsedCommand.From).Name
+                    if (-not $approvalGroups) {
+                        $approvalGroups = @()
+                    }
                     $compareParams = @{
                         ReferenceObject = $this.GetApprovalGroups($Context)
-                        DifferenceObject = $approvalGroups.Name
+                        DifferenceObject = $approvalGroups
                         PassThru = $true
                         IncludeEqual = $true
                         ExcludeDifferent = $true
@@ -319,19 +320,18 @@ class CommandExecutor : BaseLogger {
                     $inApprovalGroup = (Compare-Object @compareParams).Count -gt 0
 
                     $Context.ApprovalState = [ApprovalState]::Pending
-                    $this.LogDebug("Execution context ID [$($Context.Id)] needs approval from group(s) [$($approvalGroups.Name -join ', ')]")
+                    $this.LogDebug("Execution context ID [$($Context.Id)] needs approval from group(s) [$(($compareParams.ReferenceObject) -join ', ')]")
 
-                    if ($approvalConfig.PeerApproval) {
-                        $this.LogDebug("Execution context ID [$($Context.Id)] needs peer approval")
-                    }
-
-                    if ($approvalConfig.PeerApproval -and $inApprovalGroup) {
+                    if ($inApprovalGroup) {
+                        if ($approvalConfig.PeerApproval) {
+                            $this.LogDebug("Execution context ID [$($Context.Id)] needs peer approval")
+                        } else {
+                            $this.LogInfo("Peer Approval not needed to execute context ID [$($Context.Id)]")
+                        }
+                        return $approvalConfig.PeerApproval
+                    } else {
                         $this.LogInfo("Approval needed to execute context ID [$($Context.Id)]")
                         return $true
-                    } else {
-                        $this.LogInfo("Approval not needed to execute context ID [$($Context.Id)]")
-                        $Context.ApprovalState = [ApprovalState]::Approved
-                        return $false
                     }
                 }
             }
@@ -343,7 +343,7 @@ class CommandExecutor : BaseLogger {
     # Get list of approval groups for a command that needs approval
     [string[]]GetApprovalGroups([CommandExecutionContext]$Context) {
         foreach ($approvalConfig in $this._bot.Configuration.ApprovalConfiguration.Commands) {
-            if ($Context.FullyQualifiedCommandName -like $approvalConfig.PluginCommandExpression) {
+            if ($Context.FullyQualifiedCommandName -like $approvalConfig.Expression) {
                 return $approvalConfig.ApprovalGroups
             }
         }

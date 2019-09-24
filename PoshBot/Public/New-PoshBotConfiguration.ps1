@@ -99,6 +99,14 @@ function New-PoshBotConfiguration {
         Add reactions to a chat message indicating the command is being executed, has succeeded, or failed.
     .PARAMETER ApprovalExpireMinutes
         The amount of time (minutes) that a command the requires approval will be pending until it expires.
+    .PARAMETER DisallowDMs
+        Disallow DMs (direct messages) with the bot. If a user tries to DM the bot it will be ignored.
+    .PARAMETER FormatEnumerationLimitOverride
+        Set $FormatEnumerationLimit to this.  Defaults to unlimited (-1)
+
+        Determines how many enumerated items are included in a display.
+        This variable does not affect the underlying objects; just the display.
+        When the value of $FormatEnumerationLimit is less than the number of enumerated items, PowerShell adds an ellipsis (...) to indicate items not shown.
     .PARAMETER ApprovalCommandConfigurations
         Array of hashtables containing command approval configurations.
 
@@ -114,6 +122,63 @@ function New-PoshBotConfiguration {
                 PeerApproval = $true
             }
         )
+    .PARAMETER ChannelRules
+        Array of channels rules that control what plugin commands are allowed in a channel. Wildcards are supported.
+        Channel names that match against this list will be allowed to have Poshbot commands executed in them.
+
+        Internally this uses the `-like` comparison operator, not `-match`. Regexes are not allowed.
+
+        For best results, list channels and commands from most specific to least specific. PoshBot will
+        evaluate the first match found.
+
+        Note that the bot will still receive messages from all channels it is a member of. These message MAY
+        be logged depending on your configured logging level.
+
+        Example value:
+        @(
+            # Only allow builtin commands in the 'botadmin' channel
+            @{
+                Channel = 'botadmin'
+                IncludeCommands = @('builtin:*')
+                ExcludeCommands = @()
+            }
+            # Exclude builtin commands from any "projectX" channel
+            @{
+                Channel = '*projectx*'
+                IncludeCommands = @('*')
+                ExcludeCommands = @('builtin:*')
+            }
+            # It's the wild west in random, except giphy :)
+            @{
+                Channel = 'random'
+                IncludeCommands = @('*')
+                ExcludeCommands = @('*giphy*')
+            }
+            # All commands are otherwise allowed
+            @{
+                Channel = '*'
+                IncludeCommands = @('*')
+                ExcludeCommands = @()
+            }
+        )
+    .PARAMETER PreReceiveMiddlewareHooks
+        Array of middleware scriptblocks that will run before PoshBot "receives" the message from the backend implementation.
+        This middleware will receive the original message sent from the chat network and have a chance to modify, analyze, and optionally drop the message before PoshBot continues processing it.
+    .PARAMETER PostReceiveMiddlewareHooks
+        Array of middleware scriptblocks that will run after a message is "received" from the backend implementation.
+        This middleware runs after messages have been parsed and matched with a registered command in PoshBot.
+    .PARAMETER PreExecuteMiddlewareHooks
+        Array of middleware scriptblocks that will run before a command is executed.
+        This middleware is a good spot to run extra authentication or validation processes before commands are executed.
+    .PARAMETER PostExecuteMiddlewareHooks
+        Array of middleware scriptblocks that will run after PoshBot commands have been executed.
+        This middleware is a good spot for custom logging solutions to write command history to a custom location.
+    .PARAMETER PreResponseMiddlewareHooks
+        Array of middleware scriptblocks that will run before command responses are sent to the backend implementation.
+        This middleware is a good spot for modifying or sanitizing responses before they are sent to the chat network.
+    .PARAMETER PostResponseMiddlewareHooks
+        Array of middleware scriptblocks that will run after command responses have been sent to the backend implementation.
+        This middleware runs after all processing is complete for a command and is a good spot for additional custom logging.
     .EXAMPLE
         PS C:\> New-PoshBotConfiguration -Name Cherry2000 -AlternateCommandPrefixes @('Cherry', 'Sam')
 
@@ -184,9 +249,9 @@ function New-PoshBotConfiguration {
     [cmdletbinding()]
     param(
         [string]$Name = 'PoshBot',
-        [string]$ConfigurationDirectory = (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot'),
-        [string]$LogDirectory = (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot'),
-        [string]$PluginDirectory = (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot'),
+        [string]$ConfigurationDirectory = $script:defaultPoshBotDir,
+        [string]$LogDirectory = $script:defaultPoshBotDir,
+        [string]$PluginDirectory = $script:defaultPoshBotDir,
         [string[]]$PluginRepository = @('PSGallery'),
         [string[]]$ModuleManifestsToLoad = @(),
         [LogLevel]$LogLevel = [LogLevel]::Verbose,
@@ -205,8 +270,16 @@ function New-PoshBotConfiguration {
         [bool]$MuteUnknownCommand = $false,
         [bool]$AddCommandReactions = $true,
         [int]$ApprovalExpireMinutes = 30,
-        [hashtable[]]$ApprovalCommandConfigurations = @()
-
+        [switch]$DisallowDMs,
+        [int]$FormatEnumerationLimitOverride = -1,
+        [hashtable[]]$ApprovalCommandConfigurations = @(),
+        [hashtable[]]$ChannelRules = @(),
+        [MiddlewareHook[]]$PreReceiveMiddlewareHooks   = @(),
+        [MiddlewareHook[]]$PostReceiveMiddlewareHooks  = @(),
+        [MiddlewareHook[]]$PreExecuteMiddlewareHooks   = @(),
+        [MiddlewareHook[]]$PostExecuteMiddlewareHooks  = @(),
+        [MiddlewareHook[]]$PreResponseMiddlewareHooks  = @(),
+        [MiddlewareHook[]]$PostResponseMiddlewareHooks = @()
     )
 
     Write-Verbose -Message 'Creating new PoshBot configuration'
@@ -233,13 +306,28 @@ function New-PoshBotConfiguration {
     $config.SendCommandResponseToPrivate = $SendCommandResponseToPrivate
     $config.AddCommandReactions = $AddCommandReactions
     $config.ApprovalConfiguration.ExpireMinutes = $ApprovalExpireMinutes
+    $config.DisallowDMs = ($DisallowDMs -eq $true)
+    $config.FormatEnumerationLimitOverride = $FormatEnumerationLimitOverride
+    if ($ChannelRules.Count -ge 1) {
+        $config.ChannelRules = $null
+        foreach ($item in $ChannelRules) {
+            $config.ChannelRules += [ChannelRule]::new($item.Channel, $item.IncludeCommands, $item.ExcludeCommands)
+        }
+    }
     if ($ApprovalCommandConfigurations.Count -ge 1) {
         foreach ($item in $ApprovalCommandConfigurations) {
             $acc = [ApprovalCommandConfiguration]::new()
-            $acc.PluginCommandExpression = $item.Expression
+            $acc.Expression = $item.Expression
             $acc.ApprovalGroups = $item.Groups
             $acc.PeerApproval = $item.PeerApproval
             $config.ApprovalConfiguration.Commands.Add($acc) > $null
+        }
+    }
+
+    # Add any middleware hooks
+    foreach ($type in [enum]::GetNames([MiddlewareType])) {
+        foreach ($item in $PSBoundParameters["$($type)MiddlewareHooks"]) {
+            $config.MiddlewareConfiguration.Add($item, $type)
         }
     }
 

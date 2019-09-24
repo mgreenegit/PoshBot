@@ -7,11 +7,11 @@ pages:
     - Quickstart: guides/quickstart.md
     - Message Processing Flow: guides/message-processing.md
     - Configuration: guides/configuration.md
-    - Backends: guides/backends.md
     - Plugins: guides/plugins.md
     - Triggers: guides/triggers.md
     - Scheduled Commands: guides/scheduled-commands.md
     - Scheduled Task: guides/scheduled-task.md
+    - Channel Rules: guides/channel-rules.md
     - Command Approvals: guides/command-approvals.md
     - Command Authorization:
       - Overview: guides/command-authorization/overview.md
@@ -19,10 +19,19 @@ pages:
       - Roles: guides/command-authorization/roles.md
       - Groups: guides/command-authorization/groups.md
     - Plugin Configuration: guides/plugin-configuration.md
+    - Middleware: guides/middleware.md
     - Run Poshbot as a Service: guides/run-poshbot-as-a-service.md
+    - Backends:
+      - Teams: guides/backends/setup-teams-backend.md
   - Tutorials:
     - Backend Development:
-      - Backend Development: tutorials/backend-development/backend-development.md
+      - Overview: tutorials/backend-development/overview.md
+      - Generic Classes:
+        - Backend: tutorials/backend-development/backend-class.md
+        - Connection: tutorials/backend-development/connection-class.md
+        - Message: tutorials/backend-development/message-class.md
+        - Person: tutorials/backend-development/person-class.md
+        - Room: tutorials/backend-development/room-class.md
     - Plugin Development:
       - Simple: tutorials/plugin-development/simple.md
       - Advanced:
@@ -30,7 +39,7 @@ pages:
         - PoshBot.BotCommand Custom Attribute: tutorials/plugin-development/advanced/poshbot.botcommand-attribute.md
         - Comment-Based Help: tutorials/plugin-development/advanced/comment-based-help.md
         - Custom Responses: tutorials/plugin-development/advanced/custom-responses.md
-        - Config-Providied Parameters: tutorials/plugin-development/advanced/config-provided-parameters.md
+        - Config-Provided Parameters: tutorials/plugin-development/advanced/config-provided-parameters.md
         - Stateful Data: tutorials/plugin-development/advanced/stateful-data.md
   - Reference:
     - Builtin Commands:
@@ -89,8 +98,10 @@ pages:
       - New-PoshBotConfiguration: reference/functions/new-poshbotconfiguration.md
       - New-PoshBotFileUpload: reference/functions/New-PoshBotFileUpload.md
       - New-PoshBotInstance: reference/functions/new-poshbotinstance.md
+      - New-PoshBotMiddlewareHook: reference/functions/New-PoshBotMiddlewareHook.md
       - New-PoshBotScheduledTask: reference/functions/new-poshbotscheduledtask.md
       - New-PoshBotSlackBackend: reference/functions/new-poshbotslackbackend.md
+      - New-PoshBotTeamsBackend: reference/functions/New-PoshBotTeamsBackend.md
       - New-PoshBotTextResponse: reference/functions/new-poshbottextresponse.md
       - Remove-PoshBotStatefulData: reference/functions/Remove-PoshBotStatefulData.md
       - Save-PoshBotConfiguration: reference/functions/save-poshbotconfiguration.md

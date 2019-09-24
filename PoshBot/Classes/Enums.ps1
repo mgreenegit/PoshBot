@@ -62,6 +62,7 @@ enum ApprovalState {
 }
 
 enum MessageType {
+    CardClicked
     ChannelRenamed
     Message
     PinAdded
@@ -80,4 +81,13 @@ enum MessageSubtype {
     ChannelRenamed
     ChannelPurposeChanged
     ChannelTopicChanged
+}
+
+enum MiddlewareType {
+    PreReceive
+    PostReceive
+    PreExecute
+    PostExecute
+    PreResponse
+    PostResponse
 }

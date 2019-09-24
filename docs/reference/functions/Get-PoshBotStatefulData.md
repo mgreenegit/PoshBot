@@ -1,6 +1,7 @@
 ---
 external help file: PoshBot-help.xml
-online version: 
+Module Name: poshbot
+online version:
 schema: 2.0.0
 ---
 
@@ -12,7 +13,7 @@ Get stateful data previously exported from a PoshBot command
 ## SYNTAX
 
 ```
-Get-PoshBotStatefulData [[-Name] <String>] [-ValueOnly] [[-Scope] <String>]
+Get-PoshBotStatefulData [[-Name] <String>] [-ValueOnly] [[-Scope] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -22,14 +23,14 @@ Reads data from the PoshBot ConfigurationDirectory.
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 $ModuleData = Get-PoshBotStatefulData
 ```
 
 Get all stateful data for the PoshBot plugin this runs from
 
-### -------------------------- EXAMPLE 2 --------------------------
+### EXAMPLE 2
 ```
 $Something = Get-PoshBotStatefulData -Name 'Something' -ValueOnly -Scope Global
 ```
@@ -44,7 +45,7 @@ If specified, retrieve only this property from the stateful data
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 1
@@ -59,7 +60,7 @@ If specified, return only the value of the specified property Name
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: Named
@@ -70,13 +71,13 @@ Accept wildcard characters: False
 
 ### -Scope
 Get stateful data from this scope:
-    Module: Data scoped to this plugin 
+    Module: Data scoped to this plugin
     Global: Data available to any Poshbot plugin
 
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 2
@@ -84,6 +85,9 @@ Default value: Module
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

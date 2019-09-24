@@ -1,6 +1,7 @@
 ---
 external help file: PoshBot-help.xml
-online version: 
+Module Name: poshbot
+online version:
 schema: 2.0.0
 ---
 
@@ -13,22 +14,22 @@ Creates a new instance of PoshBot
 
 ### path (Default)
 ```
-New-PoshBotInstance -Backend <Backend>
+New-PoshBotInstance -Backend <Backend> [<CommonParameters>]
 ```
 
 ### Path
 ```
-New-PoshBotInstance [-Path] <String[]> -Backend <Backend>
+New-PoshBotInstance [-Path] <String[]> -Backend <Backend> [<CommonParameters>]
 ```
 
 ### LiteralPath
 ```
-New-PoshBotInstance [-LiteralPath] <String[]> -Backend <Backend>
+New-PoshBotInstance [-LiteralPath] <String[]> -Backend <Backend> [<CommonParameters>]
 ```
 
 ### config
 ```
-New-PoshBotInstance -Configuration <BotConfiguration[]> -Backend <Backend>
+New-PoshBotInstance -Configuration <BotConfiguration[]> -Backend <Backend> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -36,7 +37,7 @@ Creates a new instance of PoshBot from an existing configuration (.psd1) file or
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 New-PoshBotInstance -Path 'C:\Users\joeuser\.poshbot\Cherry2000.psd1' -Backend $backend
 ```
@@ -52,7 +53,7 @@ Configuration : BotConfiguration
 
 Create a new PoshBot instance from configuration file \[C:\Users\joeuser\.poshbot\Cherry2000.psd1\] and Slack backend object \[$backend\].
 
-### -------------------------- EXAMPLE 2 --------------------------
+### EXAMPLE 2
 ```
 $botConfig = Get-PoshBotConfiguration -Path (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot\Cherry2000.psd1')
 ```
@@ -72,7 +73,7 @@ Configuration : BotConfiguration
 
 Gets a bot configuration from the filesytem, creates a chat backend object, and then creates a new bot instance.
 
-### -------------------------- EXAMPLE 3 --------------------------
+### EXAMPLE 3
 ```
 $botConfig = Get-PoshBotConfiguration -Path (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot\Cherry2000.psd1')
 ```
@@ -90,7 +91,7 @@ The path to a PowerShell data (.psd1) file to create a new instance from.
 ```yaml
 Type: String[]
 Parameter Sets: Path
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -125,7 +126,7 @@ The bot configuration object to create a new instance from.
 ```yaml
 Type: BotConfiguration[]
 Parameter Sets: config
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -140,7 +141,7 @@ The backend object that hosts logic for receiving and sending messages to a chat
 ```yaml
 Type: Backend
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -149,16 +150,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ### String
-
 ### BotConfiguration
-
 ## OUTPUTS
 
 ### Bot
-
 ## NOTES
 
 ## RELATED LINKS

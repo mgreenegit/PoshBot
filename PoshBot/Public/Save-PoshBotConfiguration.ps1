@@ -41,7 +41,7 @@ function Save-PoshBotConfiguration {
         [Alias('Configuration')]
         [BotConfiguration]$InputObject,
 
-        [string]$Path = (Join-Path -Path (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot') -ChildPath 'PoshBot.psd1'),
+        [string]$Path = (Join-Path -Path $script:defaultPoshBotDir -ChildPath 'PoshBot.psd1'),
 
         [switch]$Force,
 
@@ -51,8 +51,27 @@ function Save-PoshBotConfiguration {
     process {
         if ($PSCmdlet.ShouldProcess($Path, 'Save PoshBot configuration')) {
             $hash = @{}
-            $InputObject | Get-Member -MemberType Property | ForEach-Object {
-                $hash.Add($_.Name, $InputObject.($_.Name))
+            foreach ($prop in ($InputObject | Get-Member -MemberType Property)) {
+                switch ($prop.Name) {
+                    # Serialize ChannelRules, ApprovalConfiguration, and MiddlewareConfiguration propertes differently as
+                    # ConvertTo-Metadata won't know how to do it since they're custom PoshBot classes
+                    'ChannelRules' {
+                        $hash.Add($prop.Name, $InputObject.($prop.Name).ToHash())
+                        break
+                    }
+                    'ApprovalConfiguration' {
+                        $hash.Add($prop.Name, $InputObject.($prop.Name).ToHash())
+                        break
+                    }
+                    'MiddlewareConfiguration' {
+                        $hash.Add($prop.Name, $InputObject.($prop.Name).ToHash())
+                        break
+                    }
+                    Default {
+                        $hash.Add($prop.Name, $InputObject.($prop.Name))
+                        break
+                    }
+                }
             }
 
             $meta = $hash | ConvertTo-Metadata -WarningAction SilentlyContinue

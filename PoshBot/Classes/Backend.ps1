@@ -15,6 +15,8 @@ class Backend : BaseLogger {
 
     [System.Collections.ArrayList]$IgnoredMessageTypes = (New-Object System.Collections.ArrayList)
 
+    [bool]$LazyLoadUsers = $false
+
     Backend() {}
 
     # Send a message
@@ -97,6 +99,11 @@ class Backend : BaseLogger {
 
     # Resolve a user ID to a username/nickname
     [string]UserIdToUsername([string]$UserId) {
+        # Must be extended by the specific Backend implementation
+        throw 'Implement me!'
+    }
+
+    [hashtable]GetUserInfo([string]$UserId) {
         # Must be extended by the specific Backend implementation
         throw 'Implement me!'
     }

@@ -1,6 +1,7 @@
 ---
 external help file: Builtin-help.xml
-online version: 
+Module Name: Builtin
+online version:
 schema: 2.0.0
 ---
 
@@ -12,15 +13,15 @@ Remove a scheduled command.
 ## SYNTAX
 
 ```
-Remove-ScheduledCommand -Bot <Object> [-Id] <String>
+Remove-ScheduledCommand -Bot <Object> [-Id] <String> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{Fill in the Description}}
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 !remove-scheduledcommand --id 1fb032bdec82423ba763227c83ca2c89
 ```
@@ -30,12 +31,12 @@ Remove the scheduled command with id \[1fb032bdec82423ba763227c83ca2c89\].
 ## PARAMETERS
 
 ### -Bot
-{{Fill Bot Description}}
+{{ Fill Bot Description }}
 
 ```yaml
 Type: Object
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -50,7 +51,7 @@ The Id of the scheduled command to remove.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -59,6 +60,9 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ## OUTPUTS
@@ -66,4 +70,3 @@ Accept wildcard characters: False
 ## NOTES
 
 ## RELATED LINKS
-

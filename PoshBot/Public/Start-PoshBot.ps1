@@ -92,28 +92,45 @@ function Start-PoshBot {
                 $sb = {
                     param(
                         [parameter(Mandatory)]
-                        $Configuration
+                        [hashtable]$Configuration,
+                        [string]$PoshBotManifestPath
                     )
 
-                    Import-Module PoshBot -ErrorAction Stop
+                    Import-Module $PoshBotManifestPath -ErrorAction Stop
 
-                    while($true) {
-                        try {
-                            $backend = New-PoshBotSlackBackend -Configuration $Configuration.BackendConfiguration
-                            $bot = New-PoshBotInstance -Backend $backend -Configuration $Configuration
-                            $bot.Start()
-                        } catch {
-                            Write-Error 'PoshBot crashed :( Restarting...'
-                            Start-Sleep -Seconds 5
+                    try {
+                        $tempConfig = New-PoshBotConfiguration
+                        $realConfig = $tempConfig.Serialize($Configuration)
+
+                        while ($true) {
+                            try {
+                                if ($realConfig.BackendConfiguration.Name -in @('Slack', 'SlackBackend')) {
+                                    $backend = New-PoshBotSlackBackend -Configuration $realConfig.BackendConfiguration
+                                } elseIf ($realConfig.BackendConfiguration.Name -in @('Teams', 'TeamsBackend')) {
+                                    $backend = New-PoshBotTeamsBackend -Configuration $realConfig.BackendConfiguration
+                                } else {
+                                    Write-Error "Unable to determine backend type. Name property in BackendConfiguration should have a value of 'Slack', 'SlackBackend', 'Teams', or 'TeamsBackend'"
+                                    break
+                                }
+
+                                $bot = New-PoshBotInstance -Backend $backend -Configuration $realConfig
+                                $bot.Start()
+                            } catch {
+                                Write-Error $_
+                                Write-Error 'PoshBot crashed :( Restarting...'
+                                Start-Sleep -Seconds 5
+                            }
                         }
+                    } catch {
+                        throw $_
                     }
                 }
 
                 $instanceId = (New-Guid).ToString().Replace('-', '')
                 $jobName = "PoshBot_$instanceId"
+                $poshBotManifestPath = (Join-Path -Path $PSScriptRoot -ChildPath "PoshBot.psd1")
 
-                #$job = Invoke-Command -ScriptBlock $sb -JobName $jobName -ArgumentList $bot -AsJob
-                $job = Start-Job -ScriptBlock $sb -Name $jobName -ArgumentList $Configuration
+                $job = Start-Job -ScriptBlock $sb -Name $jobName -ArgumentList $Configuration.ToHash(),$poshBotManifestPath
 
                 # Track the bot instance
                 $botTracker = @{

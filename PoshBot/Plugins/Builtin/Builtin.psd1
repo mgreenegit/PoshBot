@@ -12,7 +12,7 @@
 RootModule = 'Builtin.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.8.0'
+ModuleVersion = '0.11.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'Brandon Olin'
 CompanyName = 'Community'
 
 # Copyright statement for this module
-Copyright = '(c) 2017 Brandon Olin. All rights reserved.'
+Copyright = '(c) 2018 Brandon Olin. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Builtin PoshBot commands'
@@ -71,7 +71,7 @@ RequiredModules = @('PoshBot')
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = 'About', 'Add-CommandPermission', 'Add-GroupRole', 'Add-GroupUser',
                'Add-RolePermission', 'Disable-Plugin', 'Enable-Plugin', 'Find-Plugin',
-               'Get-CommandHistory', 'Get-Group', 'Get-Permission', 'Get-Plugin',
+               'Get-CommandHistory', 'Get-Group', 'Get-MyCommands', 'Get-Permission', 'Get-Plugin',
                'Get-Role', 'Get-CommandHelp', 'Install-Plugin', 'New-Group', 'New-Permission',
                'New-Role', 'Remove-Group', 'Remove-GroupRole', 'Remove-GroupUser',
                'Remove-Plugin', 'Remove-Role', 'Remove-RolePermission', 'Slap', 'Get-PoshBotStatus',

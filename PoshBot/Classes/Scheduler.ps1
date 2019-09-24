@@ -34,10 +34,16 @@ class Scheduler : BaseLogger {
                 } else {
                     if (-not [string]::IsNullOrEmpty($sched.StartAfter)) {
                         $newSchedule = [ScheduledMessage]::new($sched.TimeInterval, $sched.TimeValue, $msg, $sched.Enabled, $sched.StartAfter.ToUniversalTime())
+
+                        if ($newSchedule.StartAfter -lt (Get-Date).ToUniversalTime()) {
+                            #Prevent reruns of commands initially scheduled at least one interval ago
+                            $newSchedule.RecalculateStartAfter()
+                        }
                     } else {
                         $newSchedule = [ScheduledMessage]::new($sched.TimeInterval, $sched.TimeValue, $msg, $sched.Enabled, (Get-Date).ToUniversalTime())
                     }
                 }
+
                 $newSchedule.Id = $sched.Id
                 $this.ScheduleMessage($newSchedule, $false)
             }
@@ -62,9 +68,6 @@ class Scheduler : BaseLogger {
     [void]ScheduleMessage([ScheduledMessage]$ScheduledMessage, [bool]$Save) {
         if (-not $this.Schedules.ContainsKey($ScheduledMessage.Id)) {
             $this.LogInfo("Scheduled message [$($ScheduledMessage.Id)]", $ScheduledMessage)
-            if ($ScheduledMessage.Enabled) {
-                $ScheduledMessage.StartTimer()
-            }
             $this.Schedules.Add($ScheduledMessage.Id, $ScheduledMessage)
         } else {
             $msg = "Id [$($ScheduledMessage.Id)] is already scheduled"
@@ -99,10 +102,9 @@ class Scheduler : BaseLogger {
 
                 # Check if one time command
                 if ($_.Value.Once) {
-                    $_.Value.StopTimer()
                     $remove += $_.Value.Id
                 } else {
-                    $_.Value.ResetTimer()
+                    $_.Value.RecalculateStartAfter()
                 }
 
                 $newMsg = $_.Value.Message.Clone()
@@ -133,9 +135,6 @@ class Scheduler : BaseLogger {
         $existingMessage = $this.GetSchedule($ScheduledMessage.Id)
         $existingMessage.Init($ScheduledMessage.TimeInterval, $ScheduledMessage.TimeValue, $ScheduledMessage.Message, $ScheduledMessage.Enabled, $ScheduledMessage.StartAfter)
         $this.LogInfo("Scheduled message [$($ScheduledMessage.Id)] modified", $existingMessage)
-        if ($existingMessage.Enabled) {
-            $existingMessage.ResetTimer()
-        }
 
         $this.SaveState()
         return $existingMessage

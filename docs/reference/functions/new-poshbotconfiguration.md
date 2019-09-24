@@ -1,6 +1,7 @@
 ---
 external help file: PoshBot-help.xml
-online version: 
+Module Name: poshbot
+online version:
 schema: 2.0.0
 ---
 
@@ -20,7 +21,11 @@ New-PoshBotConfiguration [[-Name] <String>] [[-ConfigurationDirectory] <String>]
  [[-CommandPrefix] <Char>] [[-AlternateCommandPrefixes] <String[]>]
  [[-AlternateCommandPrefixSeperators] <Char[]>] [[-SendCommandResponseToPrivate] <String[]>]
  [[-MuteUnknownCommand] <Boolean>] [[-AddCommandReactions] <Boolean>] [[-ApprovalExpireMinutes] <Int32>]
- [[-ApprovalCommandConfigurations] <Hashtable[]>]
+ [-DisallowDMs] [[-FormatEnumerationLimitOverride] <Int32>] [[-ApprovalCommandConfigurations] <Hashtable[]>]
+ [[-ChannelRules] <Hashtable[]>] [[-PreReceiveMiddlewareHooks] <MiddlewareHook[]>]
+ [[-PostReceiveMiddlewareHooks] <MiddlewareHook[]>] [[-PreExecuteMiddlewareHooks] <MiddlewareHook[]>]
+ [[-PostExecuteMiddlewareHooks] <MiddlewareHook[]>] [[-PreResponseMiddlewareHooks] <MiddlewareHook[]>]
+ [[-PostResponseMiddlewareHooks] <MiddlewareHook[]>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -28,7 +33,7 @@ Creates a new PoshBot configuration object.
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 New-PoshBotConfiguration -Name Cherry2000 -AlternateCommandPrefixes @('Cherry', 'Sam')
 ```
@@ -53,7 +58,7 @@ ApprovalConfiguration            : ApprovalConfiguration
 
 Create a new PoshBot configuration with default values except for the bot name and alternate command prefixes that it will listen for.
 
-### -------------------------- EXAMPLE 2 --------------------------
+### EXAMPLE 2
 ```
 $backend = @{Name = 'SlackBackend'; Token = 'xoxb-569733935137-njOPkyBThqOTTUnCZb7tZpKK'}
 ```
@@ -100,7 +105,7 @@ The name the bot instance will be known as.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 1
@@ -115,11 +120,11 @@ The directory when PoshBot configuration data will be written to.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 2
-Default value: (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot')
+Default value: $script:defaultPoshBotDir
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -130,11 +135,11 @@ The log directory logs will be written to.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 3
-Default value: (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot')
+Default value: $script:defaultPoshBotDir
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -146,11 +151,11 @@ This path will be prepended to your $env:PSModulePath.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 4
-Default value: (Join-Path -Path $env:USERPROFILE -ChildPath '.poshbot')
+Default value: $script:defaultPoshBotDir
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -162,7 +167,7 @@ These will be the repository name(s) as found in Get-PSRepository.
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 5
@@ -179,7 +184,7 @@ loaded when PoshBot starts.
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 6
@@ -194,7 +199,7 @@ The level of logging that PoshBot will do.
 ```yaml
 Type: LogLevel
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 Accepted values: Info, Verbose, Debug
 
 Required: False
@@ -210,7 +215,7 @@ The maximum log file size in megabytes.
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 8
@@ -226,7 +231,7 @@ Once this value is reached, logs will start rotating.
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 9
@@ -242,7 +247,7 @@ The default it $true
 ```yaml
 Type: Boolean
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 10
@@ -257,7 +262,7 @@ The maximum log file size for the command history
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 11
@@ -273,7 +278,7 @@ Once this value is reached, the logs will start rotating.
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 12
@@ -288,7 +293,7 @@ A hashtable of configuration options required by the backend chat network implem
 ```yaml
 Type: Hashtable
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 13
@@ -336,7 +341,7 @@ Example plugin configuration:
 ```yaml
 Type: Hashtable
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 14
@@ -354,7 +359,7 @@ PoshBot will resolve these handles into IDs given by the chat network.
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 15
@@ -371,7 +376,7 @@ The prefix (single character) that must be specified in front of a command in or
 ```yaml
 Type: Char
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 16
@@ -392,7 +397,7 @@ hal open-doors --type pod
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 17
@@ -411,7 +416,7 @@ hal; open-doors --type pod
 ```yaml
 Type: Char[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 18
@@ -432,7 +437,7 @@ channel with the calling user rather than a shared channel.
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 19
@@ -447,7 +452,7 @@ Instead of PoshBot returning a warning message when it is unable to find a comma
 ```yaml
 Type: Boolean
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 20
@@ -462,7 +467,7 @@ Add reactions to a chat message indicating the command is being executed, has su
 ```yaml
 Type: Boolean
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 21
@@ -477,11 +482,47 @@ The amount of time (minutes) that a command the requires approval will be pendin
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 22
 Default value: 30
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisallowDMs
+Disallow DMs (direct messages) with the bot.
+If a user tries to DM the bot it will be ignored.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FormatEnumerationLimitOverride
+Set $FormatEnumerationLimit to this. 
+Defaults to unlimited (-1)
+
+Determines how many enumerated items are included in a display.
+This variable does not affect the underlying objects; just the display.
+When the value of $FormatEnumerationLimit is less than the number of enumerated items, PowerShell adds an ellipsis (...) to indicate items not shown.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 23
+Default value: -1
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -505,21 +546,175 @@ Array of hashtables containing command approval configurations.
 ```yaml
 Type: Hashtable[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
-Position: 23
+Position: 24
 Default value: @()
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### -ChannelRules
+Array of channels rules that control what plugin commands are allowed in a channel.
+Wildcards are supported.
+Channel names that match against this list will be allowed to have Poshbot commands executed in them.
+
+Internally this uses the \`-like\` comparison operator, not \`-match\`.
+Regexes are not allowed.
+
+For best results, list channels and commands from most specific to least specific.
+PoshBot will
+evaluate the first match found.
+
+Note that the bot will still receive messages from all channels it is a member of.
+These message MAY
+be logged depending on your configured logging level.
+
+Example value:
+@(
+    # Only allow builtin commands in the 'botadmin' channel
+    @{
+        Channel = 'botadmin'
+        IncludeCommands = @('builtin:*')
+        ExcludeCommands = @()
+    }
+    # Exclude builtin commands from any "projectX" channel
+    @{
+        Channel = '*projectx*'
+        IncludeCommands = @('*')
+        ExcludeCommands = @('builtin:*')
+    }
+    # It's the wild west in random, except giphy :)
+    @{
+        Channel = 'random'
+        IncludeCommands = @('*')
+        ExcludeCommands = @('*giphy*')
+    }
+    # All commands are otherwise allowed
+    @{
+        Channel = '*'
+        IncludeCommands = @('*')
+        ExcludeCommands = @()
+    }
+)
+
+```yaml
+Type: Hashtable[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 25
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PreReceiveMiddlewareHooks
+Array of middleware scriptblocks that will run before PoshBot "receives" the message from the backend implementation.
+This middleware will receive the original message sent from the chat network and have a chance to modify, analyze, and optionally drop the message before PoshBot continues processing it.
+
+```yaml
+Type: MiddlewareHook[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 26
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PostReceiveMiddlewareHooks
+Array of middleware scriptblocks that will run after a message is "received" from the backend implementation.
+This middleware runs after messages have been parsed and matched with a registered command in PoshBot.
+
+```yaml
+Type: MiddlewareHook[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 27
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PreExecuteMiddlewareHooks
+Array of middleware scriptblocks that will run before a command is executed.
+This middleware is a good spot to run extra authentication or validation processes before commands are executed.
+
+```yaml
+Type: MiddlewareHook[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 28
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PostExecuteMiddlewareHooks
+Array of middleware scriptblocks that will run after PoshBot commands have been executed.
+This middleware is a good spot for custom logging solutions to write command history to a custom location.
+
+```yaml
+Type: MiddlewareHook[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 29
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PreResponseMiddlewareHooks
+Array of middleware scriptblocks that will run before command responses are sent to the backend implementation.
+This middleware is a good spot for modifying or sanitizing responses before they are sent to the chat network.
+
+```yaml
+Type: MiddlewareHook[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 30
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PostResponseMiddlewareHooks
+Array of middleware scriptblocks that will run after command responses have been sent to the backend implementation.
+This middleware runs after all processing is complete for a command and is a good spot for additional custom logging.
+
+```yaml
+Type: MiddlewareHook[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 31
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ## OUTPUTS
 
 ### BotConfiguration
-
 ## NOTES
 
 ## RELATED LINKS

@@ -1,6 +1,7 @@
 ---
 external help file: Builtin-help.xml
-online version: 
+Module Name: Builtin
+online version:
 schema: 2.0.0
 ---
 
@@ -12,30 +13,37 @@ Create a new group.
 ## SYNTAX
 
 ```
-New-Group -Bot <Object> [-Name] <String> [[-Description] <String>]
+New-Group -Bot <Object> [-Name] <String[]> [[-Description] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{Fill in the Description}}
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 !new-group servicedesk 'Service desk users'
 ```
 
 Create a new group called \[sevicedesk\].
 
+### EXAMPLE 2
+```
+!new-group -name foo, bar, baz
+```
+
+Create three new groups in one command
+
 ## PARAMETERS
 
 ### -Bot
-{{Fill Bot Description}}
+{{ Fill Bot Description }}
 
 ```yaml
 Type: Object
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -45,12 +53,12 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-The name of the group to create.
+The name of one or more groups to create.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -65,7 +73,7 @@ A short description for the group.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 2
@@ -74,6 +82,9 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ## OUTPUTS
@@ -81,4 +92,3 @@ Accept wildcard characters: False
 ## NOTES
 
 ## RELATED LINKS
-

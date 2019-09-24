@@ -199,6 +199,18 @@ class PluginManager : BaseLogger {
                     $this.LogInfo("Removing plugin [$($pv.Name)] version [$Version]")
                     $p.Remove($pv.Version.ToString())
                 }
+
+                # Unload the PS module
+                $unloadModuleParams = @{
+                    FullyQualifiedName = @{
+                        ModuleName    = $PluginName
+                        ModuleVersion = $Version
+                    }
+                    Verbose = $false
+                    Force   = $true
+                }
+                $this.LogDebug("Unloading module [$PluginName] version [$Version]")
+                Remove-Module @unloadModuleParams
             } else {
                 $msg = "Plugin [$PluginName] version [$Version] is not loaded in bot"
                 $this.LogInfo([LogSeverity]::Warning, $msg)
@@ -452,13 +464,9 @@ class PluginManager : BaseLogger {
 
             # Get exported cmdlets/functions from the module and add them to the plugin
             # Adjust bot command behaviour based on metadata as appropriate
-            Import-Module -Name $manifestPath -Scope Local -Verbose:$false -WarningAction SilentlyContinue
+            Import-Module -Name $ManifestPath -Scope Local -Verbose:$false -WarningAction SilentlyContinue -Force
             $moduleCommands = Microsoft.PowerShell.Core\Get-Command -Module $ModuleName -CommandType @('Cmdlet', 'Function') -Verbose:$false
             foreach ($command in $moduleCommands) {
-
-                # Get the command help so we can pull information from it
-                # to construct the bot command
-                $cmdHelp = Get-Help -Name "$ModuleName\$($command.Name)" -ErrorAction SilentlyContinue
 
                 # Get any command metadata that may be attached to the command
                 # via the PoshBot.BotCommand extended attribute
@@ -470,9 +478,18 @@ class PluginManager : BaseLogger {
                 }
 
                 $this.LogVerbose("Creating command [$($command.Name)] for new plugin [$($plugin.Name)]")
-                $cmd = [Command]::new()
-                $cmd.Logger = $this.Logger
-                $cmd.Name = $command.Name
+                $cmd                        = [Command]::new()
+                $cmd.Name                   = $command.Name
+                $cmd.ModuleQualifiedCommand = "$ModuleName\$($command.Name)"
+                $cmd.ManifestPath           = $ManifestPath
+                $cmd.Logger                 = $this.Logger
+                $cmd.AsJob                  = $AsJob
+
+                if ($command.CommandType -eq 'Function') {
+                    $cmd.FunctionInfo = $command
+                } elseIf ($command.CommandType -eq 'Cmdlet') {
+                    $cmd.CmdletInfo = $command
+                }
 
                 # Triggers that will be added to the command
                 $triggers = @()
@@ -566,27 +583,21 @@ class PluginManager : BaseLogger {
                     $triggers += [Trigger]::new([TriggerType]::Command, $cmd.Name)
                 }
 
+                # Get the command help so we can pull information from it
+                # to construct the bot command
+                $cmdHelp = Get-Help -Name $cmd.ModuleQualifiedCommand -ErrorAction SilentlyContinue
                 if ($cmdHelp) {
                     $cmd.Description = $cmdHelp.Synopsis.Trim()
-                }
-                $cmd.ManifestPath = $manifestPath
-
-                if ($command.CommandType -eq 'Function') {
-                    $cmd.FunctionInfo = $command
-                } elseIf ($command.CommandType -eq 'Cmdlet') {
-                    $cmd.CmdletInfo = $command
                 }
 
                 # Set the command usage differently for [Command] and [Regex] trigger types
                 if ($cmd.TriggerType -eq [TriggerType]::Command) {
-                    # Reformat function syntax to show how the bot expects it to be entered
+                    # Remove unneeded parameters from command syntax
                     if ($cmdHelp) {
                         $helpSyntax = ($cmdHelp.syntax | Out-String).Trim() -split "`n" | Where-Object {$_ -ne "`r"}
-                        $helpSyntax = $helpSyntax -replace '( -([a-zA-Z]))', ' --$2'
-                        $helpSyntax = $helpSyntax -replace '(\[-([a-zA-Z]))', '[--$2'
                         $helpSyntax = $helpSyntax -replace '\[\<CommonParameters\>\]', ''
-                        $helpSyntax = $helpSyntax -replace '--Bot \<Object\> ', ''
-                        $helpSyntax = $helpSyntax -replace '\[--Bot\] \<Object\> ', '['
+                        $helpSyntax = $helpSyntax -replace '-Bot \<Object\> ', ''
+                        $helpSyntax = $helpSyntax -replace '\[-Bot\] \<Object\> ', '['
 
                         # Replace the function name in the help syntax with
                         # what PoshBot will call the command
@@ -604,9 +615,6 @@ class PluginManager : BaseLogger {
 
                 # Add triggers based on command type and metadata
                 $cmd.Triggers += $triggers
-
-                $cmd.ModuleCommand = "$ModuleName\$($command.Name)"
-                $cmd.AsJob = $AsJob
 
                 $plugin.AddCommand($cmd)
             }

@@ -4,9 +4,21 @@ class SlackBackend : Backend {
 
     # The types of message that we care about from Slack
     # All othere will be ignored
-    [string[]]$MessageTypes = @('channel_rename', 'message', 'pin_added', 'pin_removed', 'presence_change', 'reaction_added', 'reaction_removed', 'star_added', 'star_removed')
+    [string[]]$MessageTypes = @(
+        'channel_rename'
+        'member_joined_channel'
+        'member_left_channel'
+        'message'
+        'pin_added'
+        'pin_removed'
+        'presence_change'
+        'reaction_added'
+        'reaction_removed'
+        'star_added'
+        'star_removed'
+    )
 
-    [int]$MaxMessageLength = 4000
+    [int]$MaxMessageLength = 3900
 
     # Import some color defs.
     hidden [hashtable]$_PSSlackColorMap = @{
@@ -176,23 +188,33 @@ class SlackBackend : Backend {
         $messages = New-Object -TypeName System.Collections.ArrayList
         try {
             # Read the output stream from the receive job and get any messages since our last read
-            $jsonResult = $this.Connection.ReadReceiveJob()
+            [string[]]$jsonResults = $this.Connection.ReadReceiveJob()
 
-            if ($null -ne $jsonResult -and $jsonResult -ne [string]::Empty) {
-                #Write-Debug -Message "[SlackBackend:ReceiveMessage] Received `n$jsonResult"
-                $this.LogDebug('Received message', $jsonResult)
+            foreach ($jsonResult in $jsonResults) {
+                if ($null -ne $jsonResult -and $jsonResult -ne [string]::Empty) {
+                    #Write-Debug -Message "[SlackBackend:ReceiveMessage] Received `n$jsonResult"
+                    $this.LogDebug('Received message', $jsonResult)
 
-                # Strip out Slack's URI formatting
-                $jsonResult = $this._SanitizeURIs($jsonResult)
+                    # Strip out Slack's URI formatting
+                    $jsonResult = $this._SanitizeURIs($jsonResult)
 
-                $slackMessages = @($jsonResult | ConvertFrom-Json)
-                foreach ($slackMessage in $slackMessages) {
+                    $slackMessage = @($jsonResult | ConvertFrom-Json)
 
                     # Slack will sometimes send back ephemeral messages from user [SlackBot]. Ignore these
                     # These are messages like notifing that a message won't be unfurled because it's already
                     # in the channel in the last hour. Helpful message for some, but not for us.
                     if ($slackMessage.subtype -eq 'bot_message') {
                         $this.LogDebug('SubType is [bot_message]. Ignoring')
+                        continue
+                    }
+
+                    # Ignore "message_replied" subtypes
+                    # These are message Slack sends to update the client that the original message has a new reply.
+                    # That reply is sent is another message.
+                    # We do this because if the original message that this reply is to is a bot command, the command
+                    # will be executed again so we....need to not do that :)
+                    if ($slackMessage.subtype -eq 'message_replied') {
+                        $this.LogDebug('SubType is [message_replied]. Ignoring')
                         continue
                     }
 
@@ -205,6 +227,14 @@ class SlackBackend : Backend {
                         switch ($slackMessage.type) {
                             'channel_rename' {
                                 $msg.Type = [MessageType]::ChannelRenamed
+                            }
+                            'member_joined_channel' {
+                                $msg.Type = [MessageType]::Message
+                                $msg.SubType = [MessageSubtype]::ChannelJoined
+                            }
+                            'member_left_channel' {
+                                $msg.Type = [MessageType]::Message
+                                $msg.SubType = [MessageSubtype]::ChannelLeft
                             }
                             'message' {
                                 $msg.Type = [MessageType]::Message
@@ -230,6 +260,12 @@ class SlackBackend : Backend {
                             'star_removed' {
                                 $msg.Type = [MessageType]::StarRemoved
                             }
+                        }
+
+                        # The channel the message occured in is sometimes
+                        # nested in an 'item' property
+                        if ($slackMessage.item -and ($slackMessage.item.channel)) {
+                            $msg.To = $slackMessage.item.channel
                         }
 
                         if ($slackMessage.subtype) {
@@ -270,9 +306,17 @@ class SlackBackend : Backend {
                             $msg.ToName = $this.ChannelIdToName($msg.To)
                         }
 
+                        # Mark as DM
+                        if ($msg.To -match '^D') {
+                            $msg.IsDM = $true
+                        }
+
+                        # Get time of message
+                        $unixEpoch = [datetime]'1970-01-01'
                         if ($slackMessage.ts) {
-                            $unixEpoch = [datetime]'1970-01-01'
                             $msg.Time = $unixEpoch.AddSeconds($slackMessage.ts)
+                        } elseIf ($slackMessage.event_ts) {
+                            $msg.Time = $unixEpoch.AddSeconds($slackMessage.event_ts)
                         } else {
                             $msg.Time = (Get-Date).ToUniversalTime()
                         }
@@ -307,6 +351,7 @@ class SlackBackend : Backend {
                     } else {
                         $this.LogDebug("Message type is [$($slackMessage.Type)]. Ignoring")
                     }
+
                 }
             }
         } catch {
@@ -419,19 +464,46 @@ class SlackBackend : Backend {
                 }
                 '(.*?)PoshBot\.File\.Upload' {
                     $this.LogDebug('Custom response is [PoshBot.File.Upload]')
+
                     $uploadParams = @{
                         Token = $this.Connection.Config.Credential.GetNetworkCredential().Password
                         Channel = $sendTo
-                        Path = $customResponse.Path
                     }
-                    if (-not [string]::IsNullOrEmpty($customResponse.Title)) {
-                        $uploadParams.Title = $customResponse.Title
+
+                    if ([string]::IsNullOrEmpty($customResponse.Path) -and (-not [string]::IsNullOrEmpty($customResponse.Content))) {
+                        $uploadParams.Content = $customResponse.Content
+                        if (-not [string]::IsNullOrEmpty($customResponse.FileType)) {
+                            $uploadParams.FileType = $customResponse.FileType
+                        }
+                        if (-not [string]::IsNullOrEmpty($customResponse.FileName)) {
+                            $uploadParams.FileName = $customResponse.FileName
+                        }
                     } else {
+                        # Test if file exists and send error response if not found
+                        if (-not (Test-Path -Path $customResponse.Path -ErrorAction SilentlyContinue)) {
+                            # Mark command as failed since we could't find the file to upload
+                            $this.RemoveReaction($Response.OriginalMessage, [ReactionType]::Success)
+                            $this.AddReaction($Response.OriginalMessage, [ReactionType]::Failure)
+                            $att = New-SlackMessageAttachment -Color '#FF0000' -Title 'Rut row' -Text "File [$($uploadParams.Path)] not found" -Fallback 'Rut row'
+                            $msg = $att | New-SlackMessage -Channel $sendTo -AsUser
+                            $this.LogDebug("Sending card response back to Slack channel [$sendTo]", $att)
+                            $null = $msg | Send-SlackMessage -Token $this.Connection.Config.Credential.GetNetworkCredential().Password -Verbose:$false
+                            break
+                        }
+
+                        $this.LogDebug("Uploading [$($customResponse.Path)] to Slack channel [$sendTo]")
+                        $uploadParams.Path = $customResponse.Path
                         $uploadParams.Title = Split-Path -Path $customResponse.Path -Leaf
                     }
-                    $this.LogDebug("Uploading [$($customResponse.Path)] to Slack channel [$sendTo]")
+
+                    if (-not [string]::IsNullOrEmpty($customResponse.Title)) {
+                        $uploadParams.Title = $customResponse.Title
+                    }
+
                     Send-SlackFile @uploadParams -Verbose:$false
-                    Remove-Item -LiteralPath $customResponse.Path -Force
+                    if (-not $customResponse.KeepFile -and -not [string]::IsNullOrEmpty($customResponse.Path)) {
+                        Remove-Item -LiteralPath $customResponse.Path -Force
+                    }
                     break
                 }
             }
@@ -484,7 +556,7 @@ class SlackBackend : Backend {
             $this.LogDebug("Removing reaction [$emoji] from message Id [$($Message.RawMessage.ts)]")
             $resp = Send-SlackApi -Token $this.Connection.Config.Credential.GetNetworkCredential().Password -Method 'reactions.remove' -Body $body -Verbose:$false
             if (-not $resp.ok) {
-                $this.LogInfo([LogSeverity]::Error, 'Error removing reaction to message', $resp)
+                $this.LogInfo([LogSeverity]::Error, 'Error removing reaction from message', $resp)
             }
         }
     }
@@ -544,26 +616,32 @@ class SlackBackend : Backend {
     # Populate the list of channels in the Slack team
     [void]LoadRooms() {
         $this.LogDebug('Getting Slack channels')
-        $allChannels = Get-SlackChannel -Token $this.Connection.Config.Credential.GetNetworkCredential().Password -ExcludeArchived -Verbose:$false
+        $getChannelParams = @{
+            Token           = $this.Connection.Config.Credential.GetNetworkCredential().Password
+            ExcludeArchived = $true
+            Verbose         = $false
+            Paging          = $true
+        }
+        $allChannels = Get-SlackChannel @getChannelParams
         $this.LogDebug("[$($allChannels.Count)] channels returned")
 
-        $allChannels | ForEach-Object {
+        $allChannels.ForEach({
             $channel = [SlackChannel]::new()
-            $channel.Id = $_.ID
-            $channel.Name = $_.Name
-            $channel.Topic = $_.Topic
-            $channel.Purpose = $_.Purpose
-            $channel.Created = $_.Created
-            $channel.Creator = $_.Creator
-            $channel.IsArchived = $_.IsArchived
-            $channel.IsGeneral = $_.IsGeneral
+            $channel.Id          = $_.ID
+            $channel.Name        = $_.Name
+            $channel.Topic       = $_.Topic
+            $channel.Purpose     = $_.Purpose
+            $channel.Created     = $_.Created
+            $channel.Creator     = $_.Creator
+            $channel.IsArchived  = $_.IsArchived
+            $channel.IsGeneral   = $_.IsGeneral
             $channel.MemberCount = $_.MemberCount
             foreach ($member in $_.Members) {
                 $channel.Members.Add($member, $null)
             }
             $this.LogDebug("Adding channel: $($_.ID):$($_.Name)")
             $this.Rooms[$_.ID] = $channel
-        }
+        })
 
         foreach ($key in $this.Rooms.Keys) {
             if ($key -notin $allChannels.ID) {
@@ -671,6 +749,26 @@ class SlackBackend : Backend {
         return $name
     }
 
+    # Get all user info by their ID
+    [hashtable]GetUserInfo([string]$UserId) {
+        $user = $null
+        if ($this.Users.ContainsKey($UserId)) {
+            $user = $this.Users[$UserId]
+        } else {
+            $this.LogDebug([LogSeverity]::Warning, "User [$UserId] not found. Refreshing users")
+            $this.LoadUsers()
+            $user = $this.Users[$UserId]
+        }
+
+        if ($user) {
+            $this.LogDebug("Resolved [$UserId] to [$($user.Nickname)]")
+            return $user.ToHash()
+        } else {
+            $this.LogDebug([LogSeverity]::Warning, "Could not resolve channel [$UserId]")
+            return $null
+        }
+    }
+
     # Remove extra characters that Slack decorates urls with
     hidden [string] _SanitizeURIs([string]$Text) {
         $sanitizedText = $Text -replace '<([^\|>]+)\|([^\|>]+)>', '$2'
@@ -679,9 +777,32 @@ class SlackBackend : Backend {
     }
 
     # Break apart a string by number of characters
-    hidden [System.Collections.ArrayList] _ChunkString([string]$Text) {
-        $chunks = [regex]::Split($Text, "(?<=\G.{$($this.MaxMessageLength)})", [System.Text.RegularExpressions.RegexOptions]::Singleline)
-        $this.LogDebug("Split response into [$($chunks.Count)] chunks")
+    # This isn't a very efficient method but it splits the message cleanly on
+    # whole lines and produces better output
+    hidden [Collections.Generic.List[string]] _ChunkString([string]$Text) {
+
+        # Don't bother chunking an empty string
+        if ([string]::IsNullOrEmpty($Text)) {
+            return $text
+        }
+
+        $chunks             = [Collections.Generic.List[string]]::new()
+        $currentChunkLength = 0
+        $currentChunk       = ''
+        $array              = $Text -split [Environment]::NewLine
+
+        foreach ($line in $array) {
+            if (($currentChunkLength + $line.Length) -lt $this.MaxMessageLength) {
+                $currentChunkLength += $line.Length
+                $currentChunk += ($line + [Environment]::NewLine)
+            } else {
+                $chunks.Add($currentChunk + [Environment]::NewLine)
+                $currentChunk = ($line + [Environment]::NewLine)
+                $currentChunkLength = $line.Length
+            }
+        }
+        $chunks.Add($currentChunk)
+
         return $chunks
     }
 

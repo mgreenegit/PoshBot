@@ -1,6 +1,7 @@
 ---
 external help file: Builtin-help.xml
-online version: 
+Module Name: Builtin
+online version:
 schema: 2.0.0
 ---
 
@@ -12,15 +13,15 @@ Approved a command for execution.
 ## SYNTAX
 
 ```
-Approve-PendingCommand -Bot <Object> [-Id] <String>
+Approve-PendingCommand -Bot <Object> [-Id] <String> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{Fill in the Description}}
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 !approve -id f087f1fd
 ```
@@ -31,12 +32,12 @@ The command will immediately be released and executed.
 ## PARAMETERS
 
 ### -Bot
-{{Fill Bot Description}}
+{{ Fill Bot Description }}
 
 ```yaml
 Type: Object
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -51,7 +52,7 @@ The command exeution context ID of a command awaiting approval.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -60,6 +61,9 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ## OUTPUTS
@@ -67,4 +71,3 @@ Accept wildcard characters: False
 ## NOTES
 
 ## RELATED LINKS
-

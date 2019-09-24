@@ -1,6 +1,7 @@
 ---
 external help file: PoshBot-help.xml
-online version: 
+Module Name: poshbot
+online version:
 schema: 2.0.0
 ---
 
@@ -13,8 +14,8 @@ Tells PoshBot to send a specially formatted response.
 
 ```
 New-PoshBotCardResponse [[-Type] <String>] [-DM] [[-Text] <String>] [[-Title] <String>]
- [[-ThumbnailUrl] <String>] [[-ImageUrl] <String>] [[-LinkUrl] <String>] [[-Fields] <Hashtable>]
- [[-Color] <String>]
+ [[-ThumbnailUrl] <String>] [[-ImageUrl] <String>] [[-LinkUrl] <String>] [[-Fields] <IDictionary>]
+ [[-Color] <String>] [[-CustomData] <Object>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -24,7 +25,7 @@ to craft a specially formatted message when sending back to the chat network.
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 function Do-Something {
 ```
@@ -42,7 +43,7 @@ Tells PoshBot to send a formatted response back to the chat network.
 In Slack for example, this response will be a message attachment
 with a green border on the left, some text and a green checkmark thumbnail image.
 
-### -------------------------- EXAMPLE 2 --------------------------
+### EXAMPLE 2
 ```
 function Do-Something {
 ```
@@ -86,7 +87,7 @@ If the \[Color\] parameter is specified as well, it will override this parameter
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 1
@@ -101,7 +102,7 @@ Tell PoshBot to redirect the response to a DM channel.
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: Named
@@ -116,7 +117,7 @@ The text response from the command.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 2
@@ -132,7 +133,7 @@ This will be the card title in chat networks like Slack.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 3
@@ -147,7 +148,7 @@ A URL to a thumbnail image to display in the card response.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 4
@@ -162,7 +163,7 @@ A URL to an image to display in the card response.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 5
@@ -177,7 +178,7 @@ Will turn the title into a hyperlink
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 6
@@ -190,9 +191,9 @@ Accept wildcard characters: False
 A hashtable to display as a table in the card response.
 
 ```yaml
-Type: Hashtable
+Type: IDictionary
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 7
@@ -208,7 +209,7 @@ In Slack, this will be the color of the left border in the message attachment.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 8
@@ -217,12 +218,32 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -CustomData
+Any additional custom data you'd like to pass on.
+Useful for custom backends, in case you want to pass a specifically formatted response
+in the Data stream of the responses received by the backend.
+Any data sent here will be skipped by the built-in backends provided with PoshBot itself.
+
+```yaml
+Type: Object
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 9
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ## OUTPUTS
 
 ### PSCustomObject
-
 ## NOTES
 
 ## RELATED LINKS
