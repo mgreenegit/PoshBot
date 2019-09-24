@@ -12,7 +12,7 @@
 RootModule = 'PoshBot.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.11.8'
+ModuleVersion = '0.11.9'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ VariablesToExport = @()
 AliasesToExport = @()
 
 # DSC resources to export from this module
-# DscResourcesToExport = @()
+DscResourcesToExport = @('PoshBotConfiguration')
 
 # List of all modules packaged with this module
 # ModuleList = @()

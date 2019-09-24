@@ -20,6 +20,14 @@ $PSDefaultParameterValues = @{
 # Enforce TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+enum LogLevel
+{
+    Info
+    Verbose
+    Debug
+}
+
+
 <#
     DSC Resource
 #>
@@ -27,70 +35,70 @@ $PSDefaultParameterValues = @{
 class PoshBotConfiguration
 {
     [DscProperty(Key)]
-    [string]$Name = 'PoshBot',
+    [string]$Name = 'PoshBot'
 
     [DscProperty()]
-    [string]$ConfigurationDirectory = (Join-Path -Path $env:SystemRoot -ChildPath 'poshbot'),
+    [string]$ConfigurationDirectory = (Join-Path -Path $env:SystemRoot -ChildPath 'ProgramData\PoshBot')
 
     [DscProperty()]
-    [string]$LogDirectory = (Join-Path -Path $env:SystemRoot -ChildPath 'poshbot'),
+    [string]$LogDirectory = (Join-Path -Path $env:SystemRoot -ChildPath 'ProgramData\PoshBot')
 
     [DscProperty()]
-    [string]$PluginDirectory = (Join-Path -Path $env:SystemRoot -ChildPath 'poshbot'),
+    [string]$PluginDirectory = (Join-Path -Path $env:SystemRoot -ChildPath 'ProgramData\PoshBot')
 
     [DscProperty()]
-    [string[]]$PluginRepository = @('PSGallery'),
+    [string[]]$PluginRepository = @('PSGallery')
 
     [DscProperty()]
-    [string[]]$ModuleManifestsToLoad = @(),
+    [string[]]$ModuleManifestsToLoad = @()
 
     [DscProperty()]
-    [LogLevel]$LogLevel = [LogLevel]::Verbose,
+    [LogLevel]$LogLevel = [LogLevel]::Verbose
 
     [DscProperty()]
-    [int]$MaxLogSizeMB = 10,
+    [int]$MaxLogSizeMB = 10
 
     [DscProperty()]
-    [int]$MaxLogsToKeep = 5,
+    [int]$MaxLogsToKeep = 5
 
     [DscProperty()]
-    [bool]$LogCommandHistory = $true,
+    [bool]$LogCommandHistory = $true
 
     [DscProperty()]
-    [int]$CommandHistoryMaxLogSizeMB = 10,
+    [int]$CommandHistoryMaxLogSizeMB = 10
 
     [DscProperty()]
-    [int]$CommandHistoryMaxLogsToKeep = 5,
+    [int]$CommandHistoryMaxLogsToKeep = 5
 
     [DscProperty(Mandatory)]
-    [hashtable]$BackendConfiguration = @{},
+    [hashtable]$BackendConfiguration = @{}
 
     [DscProperty()]
-    [hashtable]$PluginConfiguration = @{},
+    [hashtable]$PluginConfiguration = @{}
 
     [DscProperty()]
-    [string[]]$BotAdmins = @(),
+    [string[]]$BotAdmins = @()
 
     [DscProperty()]
-    [char]$CommandPrefix = '!',
+    [char]$CommandPrefix = '!'
 
     [DscProperty()]
-    [string[]]$AlternateCommandPrefixes = @('poshbot'),
+    [string[]]$AlternateCommandPrefixes = @('poshbot')
 
     [DscProperty()]
-    [char[]]$AlternateCommandPrefixSeperators = @(':', ',', ';'),
+    [char[]]$AlternateCommandPrefixSeperators = @(':', ',', ';')
 
     [DscProperty()]
-    [string[]]$SendCommandResponseToPrivate = @(),
+    [string[]]$SendCommandResponseToPrivate = @()
 
     [DscProperty()]
-    [bool]$MuteUnknownCommand = $false,
+    [bool]$MuteUnknownCommand = $false
 
     [DscProperty()]
-    [bool]$AddCommandReactions = $true,
+    [bool]$AddCommandReactions = $true
 
     [DscProperty()]
-    [int]$ApprovalExpireMinutes = 30,
+    [int]$ApprovalExpireMinutes = 30
 
     [DscProperty()]
     [hashtable[]]$ApprovalCommandConfigurations = @()
@@ -100,6 +108,7 @@ class PoshBotConfiguration
     #>
     [void] Set()
     {
+
         $botConfiguration = New-PoshBotConfiguration @this
         Save-PoshBotConfiguration -inputObject $botConfiguration -path (Join-Path $this.ConfigurationDirectory 'config.psd1')
 
