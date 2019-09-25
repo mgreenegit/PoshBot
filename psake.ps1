@@ -187,6 +187,7 @@ task Compile -depends Clean {
         'ApprovalConfiguration'
         'ChannelRule'
         'BotConfiguration'
+        'BotConfigurationDsc'
         'Bot'
     ) | ForEach-Object {
         Get-Content -Path (Join-Path -Path $classDir -ChildPath "$($_).ps1") | Add-Content -Path $psm1 -Encoding UTF8

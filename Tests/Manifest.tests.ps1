@@ -48,11 +48,10 @@ Describe 'Module manifest' {
             $script:manifest.CopyRight | Should Not BeNullOrEmpty
         }
 
-        # Only for DSC modules
-        # It 'exports DSC resources' {
-        #     $dscResources = ($Manifest.psobject.Properties | Where Name -eq 'ExportedDscResources').Value
-        #     @($dscResources).Count | Should Not Be 0
-        # }
+        It 'exports DSC resources' {
+            $dscResources = ($Manifest.psobject.Properties | Where Name -eq 'ExportedDscResources').Value
+            @($dscResources).Count | Should Not Be 0
+        }
 
         $script:changelogVersion = $null
         It 'has a valid version in the changelog' {
